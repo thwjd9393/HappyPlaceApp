@@ -2,10 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary">#2a4d69</color>
-    <color name="primaryDark">#4b86b4</color>
+    <color name="grey">#AEAEAE</color>
+
+    <color name="primary">#4b86b4</color>
+    <color name="primaryDark">#2a4d69</color>
     <color name="colorAccent">#abcbe3</color>
 <!--    <color name="white">#e7eff6</color>-->
 <!--    <color name="white">#63ace5</color>-->
+
+    <color name="primary_text_color">#212121</color>
+    <color name="secondary_text_color">#9AA2AF</color>
+    <color name="white_color">#FFFFFF</color>
+    <color name="button_background_color">#63ace5</color>
+
 
 </resources>
