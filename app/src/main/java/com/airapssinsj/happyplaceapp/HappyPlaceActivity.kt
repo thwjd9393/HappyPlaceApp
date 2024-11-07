@@ -16,11 +16,14 @@ import java.util.Locale
 import android.Manifest;
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
@@ -98,11 +101,49 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun choosePhotoFromGallery() {
-        //멀티 퍼미션 도와주는 라이브러리 - 덱스터
-        // https://github.com/Karumi/Dexter
+//    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//    private fun choosePhotoFromGallery() {
+//        //멀티 퍼미션 도와주는 라이브러리 - 덱스터
+//        // https://github.com/Karumi/Dexter
+//
+//        //안드로이드 13이산과 미만 버전 권한 나누기
+//        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//            listOf(
+//                Manifest.permission.READ_MEDIA_IMAGES,
+//                Manifest.permission.READ_MEDIA_VIDEO
+//            )
+//        } else {
+//            listOf(
+//                Manifest.permission.READ_EXTERNAL_STORAGE,
+//                Manifest.permission.WRITE_EXTERNAL_STORAGE
+//            )
+//        }
+//
+//
+//        Dexter.withContext(this).withPermissions(permissions)
+//            .withListener(object : MultiplePermissionsListener {
+//                override fun onPermissionsChecked(report: MultiplePermissionsReport?)
+//                {
+//                    //모든 퍼미션 부여됐을 경우
+//                    if (report != null) {
+//                        if (report.areAllPermissionsGranted()){
+//                            Toast.makeText(this@HappyPlaceActivity, "갤러리 저장,읽기 쓰기 권한", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
+//                }
+//
+//                // 유저에게 이 권한이 왜 필요한지 알려주는 부분
+//                override fun onPermissionRationaleShouldBeShown(
+//                    permission: MutableList<PermissionRequest>?,
+//                    permissionToken: PermissionToken?
+//                ) {
+//                    showRationalDialogForPermission() //사용자에게 이유 알려주기 위한 메서드
+//                }
+//        }).onSameThread().check()
+//    }
 
+    //라이브 러리 없이 퍼미션
+    private fun choosePhotoFromGallery() {
         //안드로이드 13이산과 미만 버전 권한 나누기
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             listOf(
@@ -116,28 +157,34 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             )
         }
 
+        // 필요한 권한 중 아직 허용되지 않은 권한 필터링
+        val deniedPermissions = permissions.filter { permission ->
+            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
+        }
 
-        Dexter.withContext(this).withPermissions(permissions)
-            .withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport?)
-                {
-                    //모든 퍼미션 부여됐을 경우
-                    if (report != null) {
-                        if (report.areAllPermissionsGranted()){
-                            Toast.makeText(this@HappyPlaceActivity, "갤러리 저장,읽기 쓰기 권한", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-
-                // 유저에게 이 권한이 왜 필요한지 알려주는 부분
-                override fun onPermissionRationaleShouldBeShown(
-                    permission: MutableList<PermissionRequest>?,
-                    permissionToken: PermissionToken?
-                ) {
-                    showRationalDialogForPermission() //사용자에게 이유 알려주기 위한 메서드
-                }
-        }).onSameThread().check()
+        if (deniedPermissions.isEmpty()) {
+            // 모든 권한이 이미 허용된 경우
+            Toast.makeText(this, "이미 모든 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show()
+        } else {
+            // 허용되지 않은 권한을 요청
+            requestPermissionLauncher.launch(deniedPermissions.toTypedArray())
+        }
     }
+
+    // 권한 요청 결과를 처리
+    // registerForActivityResult : 액티비티 결과 처리하는 함수
+    // ActivityResultContracts 계약서 들고 있는애
+    // RequestMultiplePermissions 여러 계약 한번에 처리 하는 애
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            // 모든 권한이 허용된 경우
+            if (permissions.all { it.value }) {
+                Toast.makeText(this, "갤러리 접근 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show()
+            } else {
+                // 하나 이상의 권한이 거부된 경우
+                showRationalDialogForPermission()
+            }
+        }
 
     private fun showRationalDialogForPermission() {
         AlertDialog.Builder(this).setMessage(
