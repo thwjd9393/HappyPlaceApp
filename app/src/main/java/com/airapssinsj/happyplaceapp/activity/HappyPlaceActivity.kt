@@ -1,4 +1,4 @@
-package com.airapssinsj.happyplaceapp
+package com.airapssinsj.happyplaceapp.activity
 
 import android.app.DatePickerDialog
 import android.os.Bundle
@@ -16,27 +16,36 @@ import java.util.Locale
 import android.Manifest;
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
+import com.airapssinsj.happyplaceapp.R
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
+import java.util.UUID
 
 
 class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
     companion object {
         private const val GALLERY = 1
+        private const val CAMERA = 2
+        //휴대폰 내에 이미지를 저장할 폴더 이름
+        private const val IMAGE_DIRECTORY = "HappyPlaceImg"
     }
 
     var binding:ActivityHappyPlaceBinding? = null
@@ -101,11 +110,51 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         dialog, which ->
                         when(which){
                             0-> choosePhotoFromGallery()
-                            1-> Toast.makeText(this, "카메라 선택,,", Toast.LENGTH_SHORT).show()
+                            1-> takePhotoFromCamera()
                         }
                     }.show()
             }
         }
+    }
+
+
+    private fun takePhotoFromCamera() {
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.CAMERA
+            )
+        } else {
+            listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.CAMERA
+            )
+        }
+
+
+        Dexter.withContext(this).withPermissions(permissions)
+            .withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?)
+                {
+                    //모든 퍼미션 부여됐을 경우
+                    if (report != null) {
+                        if (report.areAllPermissionsGranted()){
+                            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                            startActivityForResult(cameraIntent, CAMERA)
+                        }
+                    }
+                }
+
+                // 유저에게 이 권한이 왜 필요한지 알려주는 부분
+                override fun onPermissionRationaleShouldBeShown(
+                    permission: MutableList<PermissionRequest>?,
+                    permissionToken: PermissionToken?
+                ) {
+                    showRationalDialogForPermission() //사용자에게 이유 알려주기 위한 메서드
+                }
+            }).onSameThread().check()
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -151,6 +200,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }).onSameThread().check()
     }
 
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
@@ -161,11 +211,30 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         //미디어스토어와 contentURI에서 이미지 꺼내기
                         //contentResolver?
                         val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
+
+                        //찍은 사진 내가 지정한 폴더에 저장하기
+                        val saveImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
+                        Log.d("TAG", "save image path :: $saveImageToInternalStorage")
+                        ///data/user/0/com.airapssinsj.happyplaceapp/app_HappyPlaceImg/db7ec4f4-0c1a-4935-98a1-91e04c5cc66b.jpg
+
                         binding!!.ivPlaceImage.setImageBitmap(selectedImageBitmap)
                     } catch (e:IOException) {
                         e.printStackTrace()
                         Toast.makeText(this, "갤러리에서 사진을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
                     }
+                }
+            } else if (requestCode == CAMERA) {
+                if (data != null && data.extras?.get("data") != null) {
+                    val thumbnail: Bitmap = data.extras!!.get("data") as Bitmap
+
+                    //찍은 사진 내가 지정한 폴더에 저장하기
+                    val saveImageToInternalStorage = saveImageToInternalStorage(thumbnail)
+                    Log.d("TAG", "save image path :: $saveImageToInternalStorage")
+
+                    binding!!.ivPlaceImage.setImageBitmap(thumbnail)
+                } else {
+                    // data가 null일 때의 처리를 작성합니다.
+                    Toast.makeText(this, "이미지를 가져오지 못했습니다.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -233,6 +302,23 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             dialog, which->
             dialog.dismiss()
         }.show()
+    }
+
+    //이미지 저장 리턴으로 저장하는 이미지 위치 받아옴
+    private fun saveImageToInternalStorage(bitmap: Bitmap) : Uri {
+        val wrapper = ContextWrapper(applicationContext) //어플리케이션 컨텍스트 담은 변수
+        var file = wrapper.getDir(IMAGE_DIRECTORY, Context.MODE_PRIVATE)
+        file = File(file,"${UUID.randomUUID()}.jpg") //(file디렉터리 위치,압축해서 만든 비트맵 이름)"
+        //파일 출력 스트림
+        try {
+            val stream : OutputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream) //(파일형식, 품질, 출력 스트림)
+            stream.flush()
+            stream.close()
+        }catch (e:IOException) {
+            e.printStackTrace()
+        }
+        return Uri.parse(file.absolutePath)
     }
 
     private fun updateDateInView() {

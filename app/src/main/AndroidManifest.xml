@@ -51,13 +51,13 @@
         android:theme="@style/Theme.HappyPlaceApp"
         tools:targetApi="31">
         <activity
-            android:name=".HappyPlaceActivity"
+            android:name=".activity.HappyPlaceActivity"
             android:screenOrientation="portrait"
             android:label="ADD HAPPY PLACE"
             android:theme="@style/CustomNoActionBarTheme"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

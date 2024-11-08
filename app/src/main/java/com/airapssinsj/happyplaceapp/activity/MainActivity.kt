@@ -1,4 +1,4 @@
-package com.airapssinsj.happyplaceapp
+package com.airapssinsj.happyplaceapp.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,6 +6,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -26,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding!!.fabAddHappyPlace.setOnClickListener {
-            startActivity(Intent(this,HappyPlaceActivity::class.java))
+            startActivity(Intent(this, HappyPlaceActivity::class.java))
         }
     }
 }
