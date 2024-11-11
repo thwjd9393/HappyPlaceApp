@@ -1,44 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
-    <!--앱에서 카메라 기능을 사용하지만, 카메라가 필수적인 기능은 아니라는 것
-    android:required="false"로 설정하면, 카메라가 없는 기기에서도 앱을 설치 가능-->
+    <!--
+    앱에서 카메라 기능을 사용하지만, 카메라가 필수적인 기능은 아니라는 것
+    android:required="false"로 설정하면, 카메라가 없는 기기에서도 앱을 설치 가능
+    -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
-
     <!--
     - 외부 저장소에 저장된 파일을 읽기 위한 권한
     - Android 13 이전 버전에서는 이미지나 동영상 등의 파일에 접근하려면 이 권한이 필요
     - Android 13(API 33)부터는 READ_EXTERNAL_STORAGE 대신 특정 미디어 유형에 접근하는
     새로운 권한(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO)을 사용해야함
     -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <!--
     - 외부 저장소에 파일을 쓰기 위한 권한
     - Android 10(API 29)부터는 이 권한이 더 이상 필요하지 않고,
     대신 Scoped Storage가 도입되어 앱이 특정 폴더나 자체 저장소에 접근하도록 변경
     -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!--
     - 기기의 외부 저장소에서 이미지 파일에 접근하기 위한 권한
     - Android 13(API 33) 이상에서만 적용
     - tools:ignore="SelectedPhotoAccess" 속성은 Lint 경고를 무시하는 설정으로,
     특정 파일에 접근할 때 선택적인 접근 권한을 설정하는 것과 관련
     -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES"
         tools:ignore="SelectedPhotoAccess" />
     <!--
     - 외부 저장소에서 비디오 파일에 접근하기 위한 권한
     - Android 13(API 33) 이상에서 비디오 파일을 읽기 위해 필요
     -->
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <!--
     - 카메라 기능을 사용하기 위한 권한
     - 앱이 기기 카메라에 접근하고 사진 또는 비디오를 촬영할 수 있도록 허용
     -->
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -51,11 +52,17 @@
         android:theme="@style/Theme.HappyPlaceApp"
         tools:targetApi="31">
         <activity
-            android:name=".activity.HappyPlaceActivity"
+            android:name=".activity.HappyPlaceDetailActivity"
+            android:label="HAPPY PLACE DETAIL"
             android:screenOrientation="portrait"
-            android:label="ADD HAPPY PLACE"
             android:theme="@style/CustomNoActionBarTheme"
             android:exported="false" />
+        <activity
+            android:name=".activity.HappyPlaceActivity"
+            android:exported="false"
+            android:label="ADD HAPPY PLACE"
+            android:screenOrientation="portrait"
+            android:theme="@style/CustomNoActionBarTheme" />
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">

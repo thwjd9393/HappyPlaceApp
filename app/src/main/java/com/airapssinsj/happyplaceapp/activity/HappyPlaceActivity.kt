@@ -28,6 +28,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.airapssinsj.happyplaceapp.R
+import com.airapssinsj.happyplaceapp.database.DatabaseHandler
+import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
@@ -51,6 +53,11 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     var binding:ActivityHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener:DatePickerDialog.OnDateSetListener
+
+    //uri로 인식되는 이미지 변수
+    private var saveImageToInternalStorage : Uri? = null
+    private var mLatitude : Double = 38.0
+    private var mLongitude : Double = 127.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,8 +85,10 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             updateDateInView()
         }
 
+        updateDateInView()
         binding!!.etDate.setOnClickListener(this)
         binding!!.tvAddImage.setOnClickListener(this)
+        binding!!.btnSave.setOnClickListener(this)
 
     }
 
@@ -113,6 +122,44 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                             1-> takePhotoFromCamera()
                         }
                     }.show()
+            }
+            R.id.btn_save -> {
+                // sqLite에 데이터 저장
+                when{
+                    binding!!.etTitle.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "제목을 입력하세요", Toast.LENGTH_SHORT).show()
+                    }
+                    binding!!.etDescription.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "내용을 입력하세요", Toast.LENGTH_SHORT).show()
+                    }
+                    binding!!.etLocation.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "위치를 입력하세요", Toast.LENGTH_SHORT).show()
+                    }
+                    saveImageToInternalStorage == null -> {
+                        Toast.makeText(this, "이미지를 선택하세요", Toast.LENGTH_SHORT).show()
+                    } else -> {
+                        val happyPlaceModel = HappyPlaceModel(
+                            0,
+                            binding!!.etTitle.text.toString(),
+                            saveImageToInternalStorage.toString(),
+                            binding!!.etDescription.text.toString(),
+                            binding!!.etDate.text.toString(),
+                            binding!!.etLocation.text.toString(),
+                            mLongitude,
+                            mLatitude
+                        )
+                        val dbHandler = DatabaseHandler(this)
+                        val addHAppyPlaceResult = dbHandler.addHappyPlace(happyPlaceModel)
+                    
+                        if (addHAppyPlaceResult > 0) {
+                            Toast.makeText(this, "저장", Toast.LENGTH_SHORT).show()
+//                            startActivity(Intent(this,MainActivity::class.java))
+                            setResult(Activity.RESULT_OK)
+                            finish()
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -213,7 +260,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
 
                         //찍은 사진 내가 지정한 폴더에 저장하기
-                        val saveImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
+                        saveImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
                         Log.d("TAG", "save image path :: $saveImageToInternalStorage")
                         ///data/user/0/com.airapssinsj.happyplaceapp/app_HappyPlaceImg/db7ec4f4-0c1a-4935-98a1-91e04c5cc66b.jpg
 
@@ -228,7 +275,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     val thumbnail: Bitmap = data.extras!!.get("data") as Bitmap
 
                     //찍은 사진 내가 지정한 폴더에 저장하기
-                    val saveImageToInternalStorage = saveImageToInternalStorage(thumbnail)
+                    saveImageToInternalStorage = saveImageToInternalStorage(thumbnail)
                     Log.d("TAG", "save image path :: $saveImageToInternalStorage")
 
                     binding!!.ivPlaceImage.setImageBitmap(thumbnail)

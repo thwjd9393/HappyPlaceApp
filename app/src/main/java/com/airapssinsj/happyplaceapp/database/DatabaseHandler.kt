@@ -1,8 +1,11 @@
 package com.airapssinsj.happyplaceapp.database
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
 
@@ -52,6 +55,10 @@ class DatabaseHandler(context: Context) :
     fun addHappyPlace(happyPlace: HappyPlaceModel): Long {
         val db = this.writableDatabase
 
+        // ContentValues()
+        // 키-값 쌍 형태로 데이터를 저장
+        // SQLite 데이터베이스의 insert()와 update() 메서드에 전달하는 데 사용
+        //
         val contentValues = ContentValues()
         contentValues.put(KEY_TITLE, happyPlace.title) // HappyPlaceModelClass TITLE
         contentValues.put(KEY_IMAGE, happyPlace.image) // HappyPlaceModelClass IMAGE
@@ -71,5 +78,38 @@ class DatabaseHandler(context: Context) :
         db.close() // Closing database connection
         return result
     }
-    // END
+
+    @SuppressLint("Range")
+    fun getHappyPlaceList():ArrayList<HappyPlaceModel> {
+        val happyPlaceList = ArrayList<HappyPlaceModel>()
+        val selectQuery = "SELECT * FROM $TABLE_HAPPY_PLACE"
+        val db = this.readableDatabase
+
+        try {
+            //커서 준비
+            val cursor : Cursor = db.rawQuery(selectQuery, null)
+
+            if (cursor.moveToFirst()) {
+                do {
+                    val place = HappyPlaceModel(
+                        cursor.getInt(cursor.getColumnIndex(KEY_ID)),
+                        cursor.getString(cursor.getColumnIndex(KEY_TITLE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_IMAGE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndex(KEY_DATE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_LOCATION)),
+                        cursor.getDouble(cursor.getColumnIndex(KEY_LATITUDE)),
+                        cursor.getDouble(cursor.getColumnIndex(KEY_LONGITUDE)),
+                    )
+                    happyPlaceList.add(place) //리스트에 넣기
+                }while (cursor.moveToNext())
+            }
+            cursor.close() //커서 닫기
+        } catch (e: SQLiteException) {
+            db.execSQL(selectQuery)
+            return ArrayList()
+        }
+        return happyPlaceList
+    }
+
 }

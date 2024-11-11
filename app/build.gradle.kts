@@ -51,4 +51,5 @@ dependencies {
 
     implementation (libs.circleimageview)
     implementation (libs.dexter)
+//    implementation ("im.dino:dbinspector:3.4.1@aar") //implementation ("im.dino:dbinspector:3.4.1@aar")
 }
