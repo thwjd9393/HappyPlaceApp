@@ -50,7 +50,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         private const val IMAGE_DIRECTORY = "HappyPlaceImg"
     }
 
-    var binding:ActivityHappyPlaceBinding? = null
+    private var binding:ActivityHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener:DatePickerDialog.OnDateSetListener
 
