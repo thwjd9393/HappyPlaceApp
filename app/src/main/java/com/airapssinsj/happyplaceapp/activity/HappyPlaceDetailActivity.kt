@@ -28,8 +28,12 @@ class HappyPlaceDetailActivity : AppCompatActivity() {
         // 모델 설정
         var happyplaceDetailModel : HappyPlaceModel? = null
 
+//        if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)) {
+//            happyplaceDetailModel = intent.getSerializableExtra(MainActivity.EXTRA_PLACE_DETAIL) as HappyPlaceModel //형변환 필요
+//        }
+
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)) {
-            happyplaceDetailModel = intent.getSerializableExtra(MainActivity.EXTRA_PLACE_DETAIL) as HappyPlaceModel //형변환 필요
+            happyplaceDetailModel = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAIL)
         }
 
         if (happyplaceDetailModel != null) {

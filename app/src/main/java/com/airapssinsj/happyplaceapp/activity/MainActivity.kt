@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
             override fun onClick(position: Int, model: HappyPlaceModel) {
                 startActivity(Intent(this@MainActivity,
                     HappyPlaceDetailActivity::class.java).putExtra(EXTRA_PLACE_DETAIL, model))
+                //putExtra는 Serializable 과 Parcelable 모두 지원
             }
 
         })
