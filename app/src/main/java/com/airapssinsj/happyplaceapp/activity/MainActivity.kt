@@ -1,6 +1,7 @@
 package com.airapssinsj.happyplaceapp.activity
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -9,13 +10,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.adapter.HappyPlaceAdapter
 import com.airapssinsj.happyplaceapp.database.DatabaseHandler
 import com.airapssinsj.happyplaceapp.databinding.ActivityMainBinding
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
+import pl.kitek.rvswipetodelete.SwipeToEditCallback
 
-class MainActivity : AppCompatActivity() {
+class MainActivity(context: Context) : AppCompatActivity() {
 
     var binding:ActivityMainBinding? = null
 
@@ -60,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         binding!!.rvHappyPlacesList.setHasFixedSize(true) //size 수정
 
-        val placesAdapter = HappyPlaceAdapter(happyPlaceList)
+        val placesAdapter = HappyPlaceAdapter(this,happyPlaceList)
         binding!!.rvHappyPlacesList.adapter = placesAdapter
 
         placesAdapter.setOnclickListener(object : HappyPlaceAdapter.OnclickListener{
@@ -71,6 +74,16 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+
+        //스와이프 활용
+        // 리스트에 속해 있는 값중 하나를 스와이프 했을 때 실행되는 기능 오버라이드
+        val editSwipeHandler = object : SwipeToEditCallback(this){
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val adapter = binding!!.rvHappyPlacesList.adapter as HappyPlaceAdapter
+                adapter.notifyEditItem(this@MainActivity, viewHolder.adapterPosition, ADD_PLACE_ACTIVITY_REQUEST_CODE)
+            }
+
+        }
     }
 
 
