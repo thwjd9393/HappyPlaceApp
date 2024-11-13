@@ -1,15 +1,19 @@
 package com.airapssinsj.happyplaceapp.activity
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.adapter.HappyPlaceAdapter
@@ -18,7 +22,7 @@ import com.airapssinsj.happyplaceapp.databinding.ActivityMainBinding
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
 import pl.kitek.rvswipetodelete.SwipeToEditCallback
 
-class MainActivity(context: Context) : AppCompatActivity() {
+class MainActivity() : AppCompatActivity() {
 
     var binding:ActivityMainBinding? = null
 
@@ -41,6 +45,7 @@ class MainActivity(context: Context) : AppCompatActivity() {
         }
 
         getHappyPlacesListFromLocalDB()
+        swipeView()
     }
 
     private fun getHappyPlacesListFromLocalDB() {
@@ -74,16 +79,41 @@ class MainActivity(context: Context) : AppCompatActivity() {
             }
 
         })
+    }
 
+    private fun swipeView() {
         //스와이프 활용
+        //수정 화면으로 이동
         // 리스트에 속해 있는 값중 하나를 스와이프 했을 때 실행되는 기능 오버라이드
-        val editSwipeHandler = object : SwipeToEditCallback(this){
+        val swipeHandler = object : SwipeToEditCallback(this){
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val adapter = binding!!.rvHappyPlacesList.adapter as HappyPlaceAdapter
-                adapter.notifyEditItem(this@MainActivity, viewHolder.adapterPosition, ADD_PLACE_ACTIVITY_REQUEST_CODE)
-            }
 
+                when (direction) {
+                    ItemTouchHelper.RIGHT -> {
+                        // 오른쪽으로 스와이프 시 수정 동작
+                        adapter.notifyEditItem(this@MainActivity, viewHolder.adapterPosition, ADD_PLACE_ACTIVITY_REQUEST_CODE)
+                    }
+                    ItemTouchHelper.LEFT -> {
+                        // 왼쪽으로 스와이프 시 삭제 동작
+                        val model = adapter.selectItem(viewHolder.adapterPosition)
+                        Log.d("TAG", "삭제A${model.id}")
+
+                        val dbHandler = DatabaseHandler(this@MainActivity)
+                        val result = dbHandler.deleteHappyPlace(model.id)
+                        if (result > 0) {
+                            Toast.makeText(this@MainActivity, "삭제 완료", Toast.LENGTH_SHORT).show()
+                            getHappyPlacesListFromLocalDB()
+                        } else {
+                            Toast.makeText(this@MainActivity, "삭제 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
         }
+
+        val editItemTouchHelper = ItemTouchHelper(swipeHandler)
+        editItemTouchHelper.attachToRecyclerView(binding!!.rvHappyPlacesList)
     }
 
 

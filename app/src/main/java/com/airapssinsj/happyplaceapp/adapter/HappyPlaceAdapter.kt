@@ -21,6 +21,7 @@ class HappyPlaceAdapter(private val context: Context,private val items:List<Happ
 
     inner class ViewHolder(binding:ItemHappyPlaceBinding)
         : RecyclerView.ViewHolder(binding.root) {
+        val tvId = binding.tvId
         val ivPlaceImage = binding.ivPlaceImage
         val tvTitle = binding.tvTitle
         val tvDescription = binding.tvDescription
@@ -36,6 +37,7 @@ class HappyPlaceAdapter(private val context: Context,private val items:List<Happ
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position] //item = HappyPlaceModel
 
+        holder.tvId.text = item.id.toString()
         holder.ivPlaceImage.setImageURI(Uri.parse(item.image))
         holder.tvTitle.text = item.title
         holder.tvDescription.text = item.description
@@ -45,8 +47,6 @@ class HappyPlaceAdapter(private val context: Context,private val items:List<Happ
                 onclickListener!!.onClick(position, item)
             }
         }
-
-
 
     }
 
@@ -70,6 +70,10 @@ class HappyPlaceAdapter(private val context: Context,private val items:List<Happ
         //변경하고자 하는 부분에 대한 정보 호출
         // 어댑터나 리사이클러뷰에 변경된 부분이 있으면 어댑터가 그 부분에 대한 알림을 받도록하기 위함
         notifyItemChanged(position)
+    }
+
+    fun selectItem (position:Int) : HappyPlaceModel {
+        return items[position]
     }
 
 }

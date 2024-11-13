@@ -44,6 +44,13 @@
             android:layout_height="wrap_content">
 
             <TextView
+                android:id="@+id/tv_id"
+                tools:text="id"
+                android:visibility="visible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
                 android:id="@+id/tv_title"
                 tools:text="title"
                 android:textColor="@color/primary_text_color"
