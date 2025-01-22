@@ -1,5 +1,6 @@
 package com.airapssinsj.happyplaceapp.activity
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -38,7 +39,7 @@ class HappyPlaceDetailActivity : AppCompatActivity() {
 
         if (happyplaceDetailModel != null) {
             setSupportActionBar(binding!!.toolbarPlaceDetail)
-            supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+            supportActionBar!!.setDisplayHomeAsUpEnabled(true) //뒤로가기
             supportActionBar!!.title = happyplaceDetailModel.title
 
             binding!!.toolbarPlaceDetail.setNavigationOnClickListener {
@@ -53,5 +54,11 @@ class HappyPlaceDetailActivity : AppCompatActivity() {
         binding!!.ivPlaceImage.setImageURI(Uri.parse(happyplaceDetailModel!!.image))
         binding!!.tvDescription.text = happyplaceDetailModel.description
         binding!!.tvLocation.text = happyplaceDetailModel.location
+
+        binding!!.btnMap.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            intent.putExtra(MainActivity.EXTRA_PLACE_DETAIL, happyplaceDetailModel)
+            startActivity(intent)
+        }
     }
 }

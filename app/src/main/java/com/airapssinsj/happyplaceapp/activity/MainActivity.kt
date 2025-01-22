@@ -112,7 +112,8 @@ class MainActivity() : AppCompatActivity() {
             }
         }
 
-        val editItemTouchHelper = ItemTouchHelper(swipeHandler)
+        // ItemTouchHelper를 사용해 리사이클러뷰에 붙이기
+        val editItemTouchHelper = ItemTouchHelper(swipeHandler) 
         editItemTouchHelper.attachToRecyclerView(binding!!.rvHappyPlacesList)
     }
 
@@ -131,7 +132,7 @@ class MainActivity() : AppCompatActivity() {
 
     companion object {
         var ADD_PLACE_ACTIVITY_REQUEST_CODE = 1
-        var EXTRA_PLACE_DETAIL = "extra_place_detail"
+        var EXTRA_PLACE_DETAIL = "extra_place_details"
     }
 
 }

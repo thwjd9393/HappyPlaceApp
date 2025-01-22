@@ -30,6 +30,10 @@ import androidx.annotation.RequiresApi
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.database.DatabaseHandler
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
@@ -48,6 +52,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         private const val CAMERA = 2
         //휴대폰 내에 이미지를 저장할 폴더 이름
         private const val IMAGE_DIRECTORY = "HappyPlaceImg"
+        private const val PLACE_AUTOCOMPLETE_REQUEST_CODE = 3
     }
 
     private var binding:ActivityHappyPlaceBinding? = null
@@ -83,6 +88,11 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             onBackPressed()
         }
 
+        //구글 플레이스
+        if (!Places.isInitialized()) {
+            Places.initialize(this, resources.getString(R.string.google_maps_api_key))
+        }
+        
         //
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)) {
             mHappyPlaceDetails = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAIL)
@@ -118,6 +128,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         binding!!.etDate.setOnClickListener(this)
         binding!!.tvAddImage.setOnClickListener(this)
         binding!!.btnSave.setOnClickListener(this)
+        binding!!.etLocation.setOnClickListener(this)
 
     }
 
@@ -195,6 +206,18 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
 
+            }
+            R.id.et_location -> {
+                try {
+                    val placeFields = listOf(Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG)
+
+                    val intent = Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, placeFields)
+                        .build(this)
+                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE)
+
+                } catch (e:Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
@@ -318,6 +341,12 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     // data가 null일 때의 처리를 작성합니다.
                     Toast.makeText(this, "이미지를 가져오지 못했습니다.", Toast.LENGTH_SHORT).show()
                 }
+            } else if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+                val place:Place = Autocomplete.getPlaceFromIntent(data!!)
+
+                binding!!.etLocation.setText(place.address)
+                mLatitude == place.latLng!!.latitude
+                mLongitude == place.latLng!!.longitude
             }
         }
     }

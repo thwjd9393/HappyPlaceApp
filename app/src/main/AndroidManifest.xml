@@ -52,11 +52,22 @@
         android:theme="@style/Theme.HappyPlaceApp"
         tools:targetApi="31">
         <activity
-            android:name=".activity.HappyPlaceDetailActivity"
-            android:label="HAPPY PLACE DETAIL"
+            android:name=".activity.MapActivity"
+            android:label="HAPPY PLACE MAP"
             android:screenOrientation="portrait"
             android:theme="@style/CustomNoActionBarTheme"
             android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_api_key" />
+
+        <activity
+            android:name=".activity.HappyPlaceDetailActivity"
+            android:exported="false"
+            android:label="HAPPY PLACE DETAIL"
+            android:screenOrientation="portrait"
+            android:theme="@style/CustomNoActionBarTheme" />
         <activity
             android:name=".activity.HappyPlaceActivity"
             android:exported="false"

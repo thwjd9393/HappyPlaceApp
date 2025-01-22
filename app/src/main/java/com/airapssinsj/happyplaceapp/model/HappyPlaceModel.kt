@@ -13,7 +13,8 @@ import java.io.Serializable
 //    val location : String,
 //    val latitude : Double,
 //    val longitude : Double,
-//):Serializable
+//):Serializable 한 클래스에서 다른 클래스로 데이터를 전달할 수 있는 타입
+//객체를 저장할 수도 있음
 
 data class HappyPlaceModel(
     val id : Int,
