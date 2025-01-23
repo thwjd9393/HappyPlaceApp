@@ -55,5 +55,6 @@ dependencies {
     implementation (libs.dexter)
 
     implementation (libs.places)
+    implementation(libs.play.services.location)
 //    implementation ("im.dino:dbinspector:3.4.1@aar") //implementation ("im.dino:dbinspector:3.4.1@aar")
 }

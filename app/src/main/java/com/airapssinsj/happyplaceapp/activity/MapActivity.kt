@@ -9,6 +9,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.databinding.ActivityMapBinding
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -37,7 +38,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)) {
             mHappyPLaceDetail = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAIL)
 
-            Log.d("TAG", "mHappyPLaceDetail => ${mHappyPLaceDetail!!.latitude}")
             Log.d("TAG", "mHappyPLaceDetail => ${mHappyPLaceDetail!!.longitude}")
         }
 
@@ -58,17 +58,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     //지도가 준비 되면 어떻게 되는지 정의할 수 있는 부분
     //마커 표시 등
     override fun onMapReady(googleMap: GoogleMap?) {
-        Log.d("TAG", "mHappyPLaceDetail => ${mHappyPLaceDetail!!.latitude}")
+        Log.d("TAG", "Latitude: ${mHappyPLaceDetail?.latitude}, Longitude: ${mHappyPLaceDetail?.longitude}")
         val position = LatLng(mHappyPLaceDetail!!.latitude, mHappyPLaceDetail!!.longitude)
 
-        // 마커 추가
         if (googleMap != null) {
             googleMap.addMarker(
                 MarkerOptions()
                     .position(position)
-                    .title(mHappyPLaceDetail!!.location)
+                    .title(mHappyPLaceDetail?.location ?: "Unknown Location")
             )
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 5f)) // 맵 줌 설정 1f~15f
+
+            //맵 머커에 대한 여러가지 설정
+            //https://developers.google.com/maps/documentation/android-sdk/marker?hl=ko
         }
-        //맵 줌인
     }
 }

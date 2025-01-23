@@ -41,6 +41,13 @@
     -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!--
+    위치정보
+    ACCESS_FINE_LOCATION : GPS
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

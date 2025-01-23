@@ -20,8 +20,11 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -30,6 +33,11 @@ import androidx.annotation.RequiresApi
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.database.DatabaseHandler
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
@@ -67,7 +75,10 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     ///////////////
     //edit위한 변수 정보를 전달 해 줄수 있는 변수 생성
     private var mHappyPlaceDetails : HappyPlaceModel? = null
-    
+
+    //구글에서 제공하는 사용자 위치 찾기
+    private lateinit var mFusedLocationClient:FusedLocationProviderClient
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +98,9 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         binding!!.toolbarAddPlace.setNavigationOnClickListener {
             onBackPressed()
         }
+
+        //위치 얻기 초기화
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         //구글 플레이스
         if (!Places.isInitialized()) {
@@ -129,6 +143,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         binding!!.tvAddImage.setOnClickListener(this)
         binding!!.btnSave.setOnClickListener(this)
         binding!!.etLocation.setOnClickListener(this)
+        binding!!.tvSelectCurrentLocation.setOnClickListener(this)
 
     }
 
@@ -137,6 +152,35 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         binding = null
     }
 
+    //사용자 위치 권한 얻어오기
+    private fun isLocationEnabled() : Boolean{
+        //사용자의 위치를 알고 있는지 또는 사용자의 위치를 알 수 있는지 여부를 알려줌
+        val locationManager : LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun requestNewUserLocation() {
+        //Priority : 우선순위
+        //PRIORITY_HIGH_ACCURACY - 이 설정을 사용하여 가장 정확한 위치를 요청합니다. 이 설정을 사용하면 위치 서비스가 GPS를 사용하여 위치를 확인할 가능성이 높습니다.
+        //PRIORITY_LOW_POWER - 이 설정을 사용하여 도시 수준의 정밀도를 요청합니다. 대략 10킬로미터의 정확성입니다. 이는 대략적인 수준의 정확성으로 간주되며 전력을 더 적게 소비할 수 있습니다.
+        //PRIORITY_PASSIVE - 전력 소비에 별다른 영향을 미치지 않으면서 사용 가능한 경우 위치 업데이트를 수신. 앱에서 위치 업데이트를 트리거하지 않고 다른 앱에서 트리거한 위치를 수신
+        var mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.interval = 1000 //얼마나 자주 작동할지
+        mLocationRequest.numUpdates = 1 //한번만 사용
+
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallBack, Looper.myLooper())
+    }
+
+    private val mLocationCallBack = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val mLastLocation : Location = locationResult.lastLocation!!
+            mLatitude = mLastLocation.latitude
+            mLongitude = mLastLocation.longitude
+        }
+    }
 
 
     //OnClickListener를 class에 임플리먼트하여 한번에 쓸수 있도록 함
@@ -185,8 +229,8 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                             binding!!.etDescription.text.toString(),
                             binding!!.etDate.text.toString(),
                             binding!!.etLocation.text.toString(),
-                            mLongitude,
-                            mLatitude
+                            mLatitude,
+                            mLongitude
                         )
                         val dbHandler = DatabaseHandler(this)
 
@@ -217,6 +261,39 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
                 } catch (e:Exception) {
                     e.printStackTrace()
+                }
+            }
+            R.id.tv_select_current_location -> {
+                if (!isLocationEnabled()) {
+                    //비활성화
+                    Toast.makeText(this, "위치정보가 비활성화 되어 있습니다", Toast.LENGTH_SHORT).show()
+
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
+                } else {
+                    Dexter.withActivity(this).withPermissions(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ).withListener(object : MultiplePermissionsListener{
+                        override fun onPermissionsChecked(p0: MultiplePermissionsReport?) {
+                            //report가 모든 퍼미션이 허용이라고 하는 곳
+
+                            Log.d("TAG", "허용")
+                        }
+
+                        //사용자가 허가 안해줌
+                        override fun onPermissionRationaleShouldBeShown(
+                            p0: MutableList<PermissionRequest>?,
+                            p1: PermissionToken?
+                        ) {
+                            //허락받기 위한 대화 상자 노출
+                            showRationalDialogForPermission()
+                        }
+
+                    }).onSameThread() //Dexter 권한 요청 라이브러리에서 사용하는 메서드로,
+                        // 권한 요청 결과 콜백(MultiplePermissionsListener)이
+                        // **현재 스레드(UI 스레드)**에서 실행되도록 보장
+                        .check() // 이 호출이 있어야 권한 요청이 실행됨
                 }
             }
         }
