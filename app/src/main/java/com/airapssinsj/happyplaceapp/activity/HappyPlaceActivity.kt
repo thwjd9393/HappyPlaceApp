@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import android.Manifest;
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -33,6 +34,7 @@ import androidx.annotation.RequiresApi
 import com.airapssinsj.happyplaceapp.R
 import com.airapssinsj.happyplaceapp.database.DatabaseHandler
 import com.airapssinsj.happyplaceapp.model.HappyPlaceModel
+import com.airapssinsj.happyplaceapp.utils.GetAddressFromLatLog
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -76,7 +78,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     //edit위한 변수 정보를 전달 해 줄수 있는 변수 생성
     private var mHappyPlaceDetails : HappyPlaceModel? = null
 
-    //구글에서 제공하는 사용자 위치 찾기
+    //구글에서 제공하는 사용자 위치 찾기용 변수
     private lateinit var mFusedLocationClient:FusedLocationProviderClient
 
 
@@ -161,6 +163,10 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
+
+    //requestLocationUpdates를 사용하면 퍼미션 받으라고 오류표시 남
+    // -> 이미 requestNewUserLocation() 하기전에 퍼미션을 받았기때문에 어노테이션을 붙여 권한손실 오류 방지
+    @SuppressLint("MissingPerMission") 
     private fun requestNewUserLocation() {
         //Priority : 우선순위
         //PRIORITY_HIGH_ACCURACY - 이 설정을 사용하여 가장 정확한 위치를 요청합니다. 이 설정을 사용하면 위치 서비스가 GPS를 사용하여 위치를 확인할 가능성이 높습니다.
@@ -174,11 +180,25 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallBack, Looper.myLooper())
     }
 
+    //사용자 위치 정보 받아오는 콜백함수
+    //받아온 위치정보를 유필 폴더에 만든 GetAddressFromLatLog에 넘겨주어 통해 주소로 받아오기
     private val mLocationCallBack = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             val mLastLocation : Location = locationResult.lastLocation!!
             mLatitude = mLastLocation.latitude
             mLongitude = mLastLocation.longitude
+
+            //GetAddressFromLatLog 유틸 실행
+            val addressTask = GetAddressFromLatLog(this@HappyPlaceActivity, mLatitude, mLongitude)
+            addressTask.setAddressListener(object : GetAddressFromLatLog.AddressListener{
+                override fun onAddressFound(address: String?) {
+                    binding!!.etLocation.setText(address)
+                }
+                override fun inError() {
+                    Log.e("TAG","주소 얻어오기 실패")
+                }
+            })
+            addressTask.getAddress() //실행
         }
     }
 
@@ -278,7 +298,7 @@ class HappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         override fun onPermissionsChecked(p0: MultiplePermissionsReport?) {
                             //report가 모든 퍼미션이 허용이라고 하는 곳
 
-                            Log.d("TAG", "허용")
+                            requestNewUserLocation()
                         }
 
                         //사용자가 허가 안해줌
